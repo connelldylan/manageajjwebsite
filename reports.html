@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports - Projected Yearly Sales Revenue</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <nav class="sidebar">
+      <h2>Analytics</h2>
+      <ul>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="customers.html">Customers</a></li>
+        <li><a href="index.html#metrics">Key Metrics</a></li>
+        <li><a href="reports.html">Reports</a></li>
+        <li><a href="index.html#settings">Settings</a></li>
+      </ul>
+    </nav>
+
+    <main class="main-content">
+      <div class="header">
+        <h1>Reports</h1>
+        <p>Financial Projections</p>
+      </div>
+
+      <div class="report-section">
+        <h2>Projected Yearly Sales Revenue</h2>
+        <p id="projected-revenue">Loading...</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Firebase SDK (Compatibility Mode) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCbZ7xXq3ymeWRgXDjOsu-xMvEKwv33ig8",
+      authDomain: "member-management-system-cb2dc.firebaseapp.com",
+      projectId: "member-management-system-cb2dc",
+      storageBucket: "member-management-system-cb2dc.firebasestorage.app",
+      messagingSenderId: "834961798562",
+      appId: "1:834961798562:web:525a5bbfc7f53000d4eefb",
+      measurementId: "G-YE8ZCN42B2"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    console.log("Firebase initialized:", db);
+
+    // Function to calculate projected yearly sales revenue
+    function calculateProjectedRevenue() {
+      const revenueElement = document.getElementById('projected-revenue');
+      revenueElement.textContent = "Calculating...";
+      let totalRevenue = 0;
+      
+      db.collection('Members').get()
+        .then((querySnapshot) => {
+          if (querySnapshot.empty) {
+            revenueElement.textContent = "No members found.";
+            return;
+          }
+          querySnapshot.forEach((doc) => {
+            const member = doc.data();
+            // Convert Subscription to a number (if possible)
+            let subscription = parseFloat(member.Subscription);
+            if (!isNaN(subscription)) {
+              totalRevenue += subscription * 12;
+            }
+          });
+          // Display the total revenue formatted as currency (USD)
+          revenueElement.textContent = "$" + totalRevenue.toFixed(2);
+        })
+        .catch((error) => {
+          console.error("Error calculating projected revenue: ", error);
+          revenueElement.textContent = "Error loading projected revenue: " + error.message;
+        });
+    }
+
+    // Calculate the projected revenue when the page loads
+    window.onload = calculateProjectedRevenue;
+  </script>
+</body>
+</html>
