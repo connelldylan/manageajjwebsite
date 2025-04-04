@@ -12,7 +12,7 @@
       <h2>Analytics</h2>
       <ul>
         <li><a href="index.html">Overview</a></li>
-        <li><a href="customers.html">Customers</a></li>
+        <li><a href="customers.html">Members</a></li>
         <li><a href="index.html#metrics">Key Metrics</a></li>
         <li><a href="reports.html">Reports</a></li>
         <li><a href="index.html#settings">Settings</a></li>
@@ -22,12 +22,28 @@
     <main class="main-content">
       <div class="header">
         <h1>Reports</h1>
-        <p>Financial Projections</p>
       </div>
 
-      <div class="report-section">
-        <h2>Projected Yearly Sales Revenue</h2>
-        <p id="projected-revenue">Loading...</p>
+      <!-- Collapsible Revenue Section -->
+      <div class="collapsible">
+        <div class="collapsible-header">
+          Projected Yearly Sales Revenue
+          <span class="toggle-icon">▼</span>
+        </div>
+        <div class="collapsible-content">
+          <p id="projected-revenue">Loading...</p>
+        </div>
+      </div>
+
+      <!-- Collapsible Chart Section -->
+      <div class="collapsible">
+        <div class="collapsible-header">
+          Members by Belt Level
+          <span class="toggle-icon">▼</span>
+        </div>
+        <div class="collapsible-content">
+          <canvas id="beltChart"></canvas>
+        </div>
       </div>
     </main>
   </div>
@@ -35,6 +51,8 @@
   <!-- Firebase SDK (Compatibility Mode) -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
     // Firebase configuration
@@ -67,13 +85,11 @@
           }
           querySnapshot.forEach((doc) => {
             const member = doc.data();
-            // Convert Subscription to a number (if possible)
             let subscription = parseFloat(member.Subscription);
             if (!isNaN(subscription)) {
               totalRevenue += subscription * 12;
             }
           });
-          // Display the total revenue formatted as currency (USD)
           revenueElement.textContent = "$" + totalRevenue.toFixed(2);
         })
         .catch((error) => {
@@ -82,8 +98,70 @@
         });
     }
 
-    // Calculate the projected revenue when the page loads
-    window.onload = calculateProjectedRevenue;
+    // Function to load and display the bar chart for belt levels
+    function loadBeltChart() {
+      db.collection('Members').get()
+        .then((querySnapshot) => {
+          let beltCounts = {};
+          querySnapshot.forEach((doc) => {
+            const belt = doc.data().BeltLevel || 'Unknown';
+            beltCounts[belt] = (beltCounts[belt] || 0) + 1;
+          });
+
+          const labels = Object.keys(beltCounts);
+          const data = Object.values(beltCounts);
+
+          const ctx = document.getElementById('beltChart').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: 'Number of Members',
+                data: data,
+                backgroundColor: 'rgba(46, 12, 255, 0.43)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+              }]
+            },
+            options: {
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    precision: 0
+                  }
+                }
+              }
+            }
+          });
+        })
+        .catch((error) => {
+          console.error("Error loading belt chart: ", error);
+        });
+    }
+
+    // Collapsible functionality: toggle display of content on header click
+    document.addEventListener("DOMContentLoaded", function() {
+      const headers = document.querySelectorAll('.collapsible-header');
+      headers.forEach(header => {
+        header.addEventListener('click', function() {
+          this.classList.toggle("active");
+          const content = this.nextElementSibling;
+          if (content.style.display === "block") {
+            content.style.display = "none";
+          } else {
+            content.style.display = "block";
+          }
+        });
+      });
+    });
+
+    // Initialize both functions on window load
+    window.onload = function() {
+      calculateProjectedRevenue();
+      loadBeltChart();
+    };
   </script>
 </body>
 </html>
