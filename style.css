@@ -181,3 +181,43 @@ tr:hover {
 .view-btn:hover {
     background-color: #2980b9;
 }
+/* Collapsible Section Styling */
+.collapsible {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 20px 30px;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+}
+
+.collapsible-header {
+    padding: 20px;
+    background-color: #2c3e50;
+    cursor: pointer;
+    font-weight: bold;
+    color: #fdfdfd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.collapsible-header:hover {
+    background-color: #04263d;
+}
+
+.collapsible-content {
+    display: none;
+    padding: 20px;
+    background-color: #ffffff;
+    border-top: 1px solid #ccc;
+}
+
+/* Optional: Show active header toggle icon flipped */
+.collapsible-header.active .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease;
+}
