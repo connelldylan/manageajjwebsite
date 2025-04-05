@@ -1,118 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customers List</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customers List</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal h2 {
+      margin: 0;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <nav class="sidebar">
-            <h2>Analytics</h2>
-            <ul>
-                <li><a href="index.html">Overview</a></li>
-                <li><a href="customers.html">Members</a></li>
-                <li><a href="index.html#metrics">Key Metrics</a></li>
-                <li><a href="reports.html">Reports</a></li>
-                <li><a href="index.html#settings">Settings</a></li>
-            </ul>
-        </nav>
+  <div class="container">
+    <nav class="sidebar">
+      <h2>Analytics</h2>
+      <ul>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="customers.html">Members</a></li>
+        <li><a href="index.html#metrics">Key Metrics</a></li>
+        <li><a href="reports.html">Reports</a></li>
+        <li><a href="index.html#settings">Settings</a></li>
+      </ul>
+    </nav>
 
-        <main class="main-content">
-            <div class="header">
-                <h1>Member List</h1>
-                <p>All registered members</p>
-            </div>
+    <main class="main-content">
+      <div class="header">
+        <h1>Member List</h1>
+        <p>All registered members</p>
+      </div>
 
-            <div class="table-container">
-                <table id="customers-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Belt Level</th>
-                            <th>Subscription</th> <!-- New column -->
-                        </tr>
-                    </thead>
-                    <tbody id="customers-tbody">
-                        <!-- Data will be populated here -->
-                    </tbody>
-                </table>
-            </div>
-        </main>
+      <div class="table-container">
+        <table id="customers-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Belt Level</th>
+              <th>Subscription</th>
+              <th>Check-Ins</th>
+            </tr>
+          </thead>
+          <tbody id="customers-tbody">
+            <!-- Data will be populated here -->
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal for Check-Ins -->
+  <div id="checkinModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Check-Ins</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div id="checkinDetails"></div>
     </div>
+  </div>
 
-    <!-- Firebase SDK (Compatibility Mode) -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
-    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCbZ7xXq3ymeWRgXDjOsu-xMvEKwv33ig8",
-            authDomain: "member-management-system-cb2dc.firebaseapp.com",
-            projectId: "member-management-system-cb2dc",
-            storageBucket: "member-management-system-cb2dc.firebasestorage.app",
-            messagingSenderId: "834961798562",
-            appId: "1:834961798562:web:525a5bbfc7f53000d4eefb",
-            measurementId: "G-YE8ZCN42B2"
-        };
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCbZ7xXq3ymeWRgXDjOsu-xMvEKwv33ig8",
+      authDomain: "member-management-system-cb2dc.firebaseapp.com",
+      projectId: "member-management-system-cb2dc",
+      storageBucket: "member-management-system-cb2dc.firebasestorage.app",
+      messagingSenderId: "834961798562",
+      appId: "1:834961798562:web:525a5bbfc7f53000d4eefb",
+      measurementId: "G-YE8ZCN42B2"
+    };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        console.log("Firebase initialized:", db);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-        // Function to format phone number as (###) ###-####
-        function formatPhoneNumber(phone) {
-            if (!phone) return 'N/A';
-            const digits = phone.replace(/\D/g, '');
-            if (digits.length === 10) {
-                return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    function formatPhoneNumber(phone) {
+      if (!phone) return 'N/A';
+      const digits = phone.replace(/\D/g, '');
+      return digits.length === 10
+        ? `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+        : phone || 'N/A';
+    }
+
+    function loadMembers() {
+      const tbody = document.getElementById('customers-tbody');
+      tbody.innerHTML = '';
+
+      db.collection('Members').get()
+        .then((querySnapshot) => {
+          if (querySnapshot.empty) {
+            tbody.innerHTML = '<tr><td colspan="6">No members found</td></tr>';
+            return;
+          }
+
+          querySnapshot.forEach((doc) => {
+            const member = doc.data();
+            const row = document.createElement('tr');
+
+            const checkInCount = Array.isArray(member.CheckIns) ? member.CheckIns.length : 0;
+
+            row.innerHTML = `
+              <td>${member.Name || 'N/A'}</td>
+              <td>${member.Email || 'N/A'}</td>
+              <td>${formatPhoneNumber(member.PhoneNumber)}</td>
+              <td>${member.BeltLevel || 'N/A'}</td>
+              <td>${member.Subscription || 'N/A'}</td>
+              <td>
+               ${checkInCount} Check-In(s)
+               ${checkInCount > 0 ? `<button class="view-btn" onclick="showCheckIns('${doc.id}')">View</button>` : ''}
+              </td>
+            `;
+
+            tbody.appendChild(row);
+          });
+        })
+        .catch((error) => {
+          console.error("Error getting members: ", error);
+          tbody.innerHTML = `<tr><td colspan="6">Error loading members: ${error.message}</td></tr>`;
+        });
+    }
+
+    function showCheckIns(docId) {
+      const modal = document.getElementById('checkinModal');
+      const details = document.getElementById('checkinDetails');
+      details.innerHTML = 'Loading...';
+
+      db.collection('Members').doc(docId).get()
+        .then((doc) => {
+          if (!doc.exists) {
+            details.innerHTML = 'No data found.';
+            return;
+          }
+
+          const data = doc.data();
+          if (!Array.isArray(data.CheckIns) || data.CheckIns.length === 0) {
+            details.innerHTML = 'No check-ins recorded.';
+            return;
+          }
+
+          const list = data.CheckIns.map(entry => {
+            try {
+              const date = entry.toDate ? entry.toDate() : new Date(entry);
+              return `<div>${!isNaN(date.getTime()) ? date.toLocaleString() : 'Invalid Date'}</div>`;
+            } catch {
+              return `<div>Invalid Date</div>`;
             }
-            return phone || 'N/A';
-        }
+          }).join('');
 
-        // Function to load members
-        function loadMembers() {
-            const tbody = document.getElementById('customers-tbody');
-            tbody.innerHTML = '';
-            console.log("Loading members...");
+          details.innerHTML = list;
+        })
+        .catch((error) => {
+          details.innerHTML = `Error loading check-ins: ${error.message}`;
+        });
 
-            db.collection('Members').get()
-                .then((querySnapshot) => {
-                    console.log("Number of documents retrieved:", querySnapshot.size);
-                    if (querySnapshot.empty) {
-                        tbody.innerHTML = '<tr><td colspan="5">No members found</td></tr>'; // Updated colspan to 5
-                        console.log("No documents in 'Members' collection");
-                        return;
-                    }
-                    querySnapshot.forEach((doc) => {
-                        const member = doc.data();
-                        console.log("Member data:", member);
-                        const row = document.createElement('tr');
-                        
-                        row.innerHTML = `
-                            <td>${member.Name || 'N/A'}</td>
-                            <td>${member.Email || 'N/A'}</td>
-                            <td>${formatPhoneNumber(member.PhoneNumber)}</td>
-                            <td>${member.BeltLevel || 'N/A'}</td>
-                            <td>${member.Subscription || 'N/A'}</td> <!-- New field -->
-                        `;
-                        
-                        tbody.appendChild(row);
-                    });
-                })
-                .catch((error) => {
-                    console.error("Error getting members: ", error);
-                    tbody.innerHTML = '<tr><td colspan="5">Error loading members: ' + error.message + '</td></tr>'; // Updated colspan to 5
-                });
-        }
+      modal.style.display = 'block';
+    }
 
-        // Load members when page loads
-        window.onload = loadMembers;
-    </script>
+    function closeModal() {
+      document.getElementById('checkinModal').style.display = 'none';
+    }
+
+    window.onload = loadMembers;
+  </script>
 </body>
 </html>
