@@ -1,0 +1,38 @@
+<script>
+    if (sessionStorage.getItem('isAdmin') !== 'true') {
+      window.location.href = 'index.html';
+    }
+  </script>
+  
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Overview</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <nav class="sidebar">
+        <h2>Analytics</h2>
+        <ul>
+          <li><a href="overview.html">Overview</a></li>
+          <li><a href="customers.html">Members</a></li>
+          <li><a href="metrics.html">Key Metrics</a></li>
+          <li><a href="reports.html">Reports</a></li>
+          <li><a href="settings.html">Settings</a></li>
+        </ul>
+      </nav>
+  
+      <main class="main-content">
+        <div class="header">
+          <h1>Dashboard Overview</h1>
+          <p>Summary and system highlights</p>
+        </div>
+        <!-- Overview content goes here -->
+      </main>
+    </div>
+  </body>
+  </html>
+  
