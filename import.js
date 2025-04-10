@@ -13,22 +13,43 @@ const db = admin.firestore();
 const Timestamp = admin.firestore.Timestamp;
 
 // Load JSON data
-const rawData = JSON.parse(fs.readFileSync(path.join(__dirname, "MOCK_DATA.json"), "utf8"));
+const rawData = JSON.parse(fs.readFileSync(path.join(__dirname, "Jiujitsu.json"), "utf8"));
 
-// Convert date strings to Firestore Timestamps
 function toTimestamp(dateStr) {
-  const jsDate = new Date(dateStr.replace(" ", "T") + "Z");
+  if (!dateStr) throw new Error("Date string is empty or undefined");
+
+  // Try to detect and convert non-ISO format like "YYYY-MM-DD HH:MM:SS"
+  let jsDate;
+  if (dateStr.includes("T")) {
+    jsDate = new Date(dateStr); // ISO is safe
+  } else {
+    jsDate = new Date(dateStr.replace(" ", "T") + "Z"); // convert to ISO manually
+  }
+
+  if (isNaN(jsDate.getTime())) {
+    console.error("Invalid date string:", dateStr);
+    throw new Error(`Invalid date: ${dateStr}`);
+  }
+
   return Timestamp.fromDate(jsDate);
 }
+
+
+
 
 // Upload data to "Members" collection
 async function importMembers() {
   for (const user of rawData) {
-    const formattedCheckIns = user.CheckIns.map(entry => toTimestamp(entry.date));
+    const formattedCheckIns = user.CheckIns.map(entry => ({
+      date: toTimestamp(entry.date)
+    }));
+    
 
     const userData = {
       ...user,
-      CheckIns: formattedCheckIns
+      CheckIns: formattedCheckIns,
+      BirthDate: toTimestamp(user.BirthDate),
+      JoinDate: toTimestamp(user.JoinDate)
     };
 
     try {

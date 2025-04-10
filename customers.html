@@ -31,13 +31,16 @@
         <p>All registered members</p>
       </div>
 
-      <div class="table-container">
-        <table id="customers-table">
+      <div class="table-container" style="overflow-x: auto;">
+        <table id="customers-table" style="min-width: 1000px;">
           <thead>
             <tr>
               <th>Name</th>
               <th>Email</th>
               <th>Phone</th>
+              <th>Address</th>
+              <th>Birth Date</th>
+              <th>Join Date</th>
               <th>Belt Level</th>
               <th>Subscription</th>
               <th>Check-Ins</th>
@@ -88,6 +91,19 @@
         : phone || 'N/A';
     }
 
+    function formatDate(field) {
+      try {
+        if (field?.toDate) {
+          return field.toDate().toLocaleDateString();
+        } else {
+          const d = new Date(field);
+          return !isNaN(d.getTime()) ? d.toLocaleDateString() : 'Invalid Date';
+        }
+      } catch {
+        return 'Invalid Date';
+      }
+    }
+
     function loadMembers() {
       const tbody = document.getElementById('customers-tbody');
       tbody.innerHTML = '';
@@ -95,7 +111,7 @@
       db.collection('Members').get()
         .then((querySnapshot) => {
           if (querySnapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="6">No members found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9">No members found</td></tr>';
             return;
           }
 
@@ -109,11 +125,14 @@
               <td>${member.Name || 'N/A'}</td>
               <td>${member.Email || 'N/A'}</td>
               <td>${formatPhoneNumber(member.PhoneNumber)}</td>
+              <td>${member.Address || 'N/A'}</td>
+              <td>${formatDate(member.BirthDate)}</td>
+              <td>${formatDate(member.JoinDate)}</td>
               <td>${member.BeltLevel || 'N/A'}</td>
               <td>${member.Subscription || 'N/A'}</td>
               <td>
-               ${checkInCount} Check-In(s)
-               ${checkInCount > 0 ? `<button class="view-btn" onclick="showCheckIns('${doc.id}')">View</button>` : ''}
+                ${checkInCount} Check-In(s)
+                ${checkInCount > 0 ? `<button class="view-btn" onclick="showCheckIns('${doc.id}')">View</button>` : ''}
               </td>
             `;
 
@@ -122,7 +141,7 @@
         })
         .catch((error) => {
           console.error("Error getting members: ", error);
-          tbody.innerHTML = `<tr><td colspan="6">Error loading members: ${error.message}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="9">Error loading members: ${error.message}</td></tr>`;
         });
     }
 
@@ -146,7 +165,7 @@
 
           const list = data.CheckIns.map(entry => {
             try {
-              const date = entry.toDate ? entry.toDate() : new Date(entry);
+              const date = entry.date?.toDate ? entry.date.toDate() : new Date(entry.date);
               return `<div>${!isNaN(date.getTime()) ? date.toLocaleString() : 'Invalid Date'}</div>`;
             } catch {
               return `<div>Invalid Date</div>`;

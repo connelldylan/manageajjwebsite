@@ -221,3 +221,11 @@ tr:hover {
 .toggle-icon {
     transition: transform 0.3s ease;
 }
+.table-container {
+    overflow-x: auto;
+  }
+  
+  #customers-table {
+    min-width: 1000px;
+    white-space: nowrap;
+  }
