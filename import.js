@@ -21,6 +21,9 @@ function toTimestamp(dateStr) {
   return Timestamp.fromDate(jsDate);
 }
 
+
+
+
 // Upload data to "Members" collection
 async function importMembers() {
   for (const user of rawData) {
