@@ -13,22 +13,26 @@ const db = admin.firestore();
 const Timestamp = admin.firestore.Timestamp;
 
 // Load JSON data
-const rawData = JSON.parse(fs.readFileSync(path.join(__dirname, "MOCK_DATA.json"), "utf8"));
+const rawData = JSON.parse(fs.readFileSync(path.join(__dirname, "Jiujitsu.json"), "utf8"));
 
-// Convert date strings to Firestore Timestamps
+// Convert a date string to Firestore Timestamp
 function toTimestamp(dateStr) {
-  const jsDate = new Date(dateStr.replace(" ", "T") + "Z");
+  const jsDate = new Date(dateStr.replace(" ", "T") + (dateStr.includes("T") ? "" : "Z"));
   return Timestamp.fromDate(jsDate);
 }
 
 // Upload data to "Members" collection
 async function importMembers() {
   for (const user of rawData) {
-    const formattedCheckIns = user.CheckIns.map(entry => toTimestamp(entry.date));
+    const formattedCheckIns = user.CheckIns.map(entry => ({
+      date: toTimestamp(entry.date)
+    }));
 
     const userData = {
       ...user,
-      CheckIns: formattedCheckIns
+      CheckIns: formattedCheckIns,
+      BirthDate: toTimestamp(user.BirthDate),
+      JoinDate: toTimestamp(user.JoinDate)
     };
 
     try {
