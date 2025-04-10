@@ -61,7 +61,11 @@
         <h2>Check-Ins</h2>
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
-      <div id="checkinDetails"></div>
+      <div class="checkin-controls" style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0;">Check-In History</h3>
+        <button id="sortToggleBtn" onclick="toggleSortOrder()" style="padding: 5px 10px; cursor: pointer;">Sort: Descending</button>
+      </div>
+      <div id="checkinDetails" style="margin-top: 10px;"></div>
     </div>
   </div>
 
@@ -118,7 +122,6 @@
           querySnapshot.forEach((doc) => {
             const member = doc.data();
             const row = document.createElement('tr');
-
             const checkInCount = Array.isArray(member.CheckIns) ? member.CheckIns.length : 0;
 
             row.innerHTML = `
@@ -145,9 +148,14 @@
         });
     }
 
+    // Globals for sorting
+    let currentSortOrder = 'desc';
+    let currentCheckIns = [];
+
     function showCheckIns(docId) {
       const modal = document.getElementById('checkinModal');
       const details = document.getElementById('checkinDetails');
+      const sortBtn = document.getElementById('sortToggleBtn');
       details.innerHTML = 'Loading...';
 
       db.collection('Members').doc(docId).get()
@@ -158,27 +166,69 @@
           }
 
           const data = doc.data();
-          if (!Array.isArray(data.CheckIns) || data.CheckIns.length === 0) {
+          currentCheckIns = Array.isArray(data.CheckIns) ? data.CheckIns : [];
+
+          if (currentCheckIns.length === 0) {
             details.innerHTML = 'No check-ins recorded.';
             return;
           }
 
-          const list = data.CheckIns.map(entry => {
-            try {
-              const date = entry.date?.toDate ? entry.date.toDate() : new Date(entry.date);
-              return `<div>${!isNaN(date.getTime()) ? date.toLocaleString() : 'Invalid Date'}</div>`;
-            } catch {
-              return `<div>Invalid Date</div>`;
-            }
-          }).join('');
-
-          details.innerHTML = list;
+          renderCheckIns(); // Render initially
         })
         .catch((error) => {
           details.innerHTML = `Error loading check-ins: ${error.message}`;
         });
 
       modal.style.display = 'block';
+    }
+
+    function renderCheckIns() {
+      const details = document.getElementById('checkinDetails');
+      const sortBtn = document.getElementById('sortToggleBtn');
+
+      currentCheckIns.sort((a, b) => {
+        const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
+        const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
+        return currentSortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      });
+
+      let tableHTML = `
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+          <thead>
+            <tr>
+              <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ccc;">#</th>
+              <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ccc;">Check-In Date</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      currentCheckIns.forEach((entry, index) => {
+        let dateStr = 'Invalid Date';
+        try {
+          const date = entry.date?.toDate ? entry.date.toDate() : new Date(entry.date);
+          if (!isNaN(date.getTime())) {
+            dateStr = date.toLocaleString();
+          }
+        } catch {}
+
+        tableHTML += `
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${index + 1}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${dateStr}</td>
+          </tr>
+        `;
+      });
+
+      tableHTML += `</tbody></table>`;
+      details.innerHTML = tableHTML;
+
+      sortBtn.textContent = `Sort: ${currentSortOrder === 'asc' ? 'Ascending' : 'Descending'}`;
+    }
+
+    function toggleSortOrder() {
+      currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+      renderCheckIns();
     }
 
     function closeModal() {
