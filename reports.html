@@ -1,9 +1,3 @@
-<script>
-  if (sessionStorage.getItem('isAdmin') !== 'true') {
-    window.location.href = 'index.html';
-  }
-</script>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,6 +7,12 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <script>
+    if (sessionStorage.getItem('isAdmin') !== 'true') {
+      window.location.href = 'index.html';
+    }
+  </script>
+
   <div class="container">
     <nav class="sidebar">
       <h2>Analytics</h2>
@@ -30,7 +30,7 @@
         <h1>Reports</h1>
       </div>
 
-      <!-- Collapsible Revenue Section -->
+      <!-- Projected Revenue -->
       <div class="collapsible">
         <div class="collapsible-header">
           Projected Yearly Sales Revenue
@@ -41,7 +41,7 @@
         </div>
       </div>
 
-      <!-- Collapsible Chart Section -->
+      <!-- Members by Belt Level -->
       <div class="collapsible">
         <div class="collapsible-header">
           Members by Belt Level
@@ -51,122 +51,228 @@
           <canvas id="beltChart"></canvas>
         </div>
       </div>
+
+      <!-- Check-In Heatmap -->
+      <div class="collapsible">
+        <div class="collapsible-header">
+          Check-In Heatmap
+          <span class="toggle-icon">▼</span>
+        </div>
+        <div class="collapsible-content">
+          <canvas id="checkinHeatmap" style="max-width: 800px; margin-top: 20px;"></canvas>
+        </div>
+      </div>
     </main>
   </div>
 
-  <!-- Firebase SDK (Compatibility Mode) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <!-- Chart.js CDN -->
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Matrix Chart plugin for heatmap -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@1.2.0/dist/chartjs-chart-matrix.min.js"></script>
 
   <script>
-    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyCbZ7xXq3ymeWRgXDjOsu-xMvEKwv33ig8",
       authDomain: "member-management-system-cb2dc.firebaseapp.com",
       projectId: "member-management-system-cb2dc",
-      storageBucket: "member-management-system-cb2dc.firebasestorage.app",
+      storageBucket: "member-management-system-cb2dc.appspot.com",
       messagingSenderId: "834961798562",
       appId: "1:834961798562:web:525a5bbfc7f53000d4eefb",
       measurementId: "G-YE8ZCN42B2"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    console.log("Firebase initialized:", db);
 
-    // Function to calculate projected yearly sales revenue
+    // Projected Revenue
     function calculateProjectedRevenue() {
       const revenueElement = document.getElementById('projected-revenue');
       revenueElement.textContent = "Calculating...";
       let totalRevenue = 0;
-      
-      db.collection('Members').get()
-        .then((querySnapshot) => {
-          if (querySnapshot.empty) {
-            revenueElement.textContent = "No members found.";
-            return;
+
+      db.collection('Members').get().then((querySnapshot) => {
+        if (querySnapshot.empty) {
+          revenueElement.textContent = "No members found.";
+          return;
+        }
+        querySnapshot.forEach((doc) => {
+          const member = doc.data();
+          const subscription = parseFloat(member.Subscription);
+          if (!isNaN(subscription)) {
+            totalRevenue += subscription * 12;
           }
-          querySnapshot.forEach((doc) => {
-            const member = doc.data();
-            let subscription = parseFloat(member.Subscription);
-            if (!isNaN(subscription)) {
-              totalRevenue += subscription * 12;
-            }
-          });
-          revenueElement.textContent = "$" + totalRevenue.toFixed(2);
-        })
-        .catch((error) => {
-          console.error("Error calculating projected revenue: ", error);
-          revenueElement.textContent = "Error loading projected revenue: " + error.message;
         });
+        revenueElement.textContent = "$" + totalRevenue.toFixed(2);
+      }).catch((error) => {
+        console.error("Error calculating projected revenue:", error);
+        revenueElement.textContent = "Error loading projected revenue: " + error.message;
+      });
     }
 
-    // Function to load and display the bar chart for belt levels
+    // Belt Chart
     function loadBeltChart() {
-      db.collection('Members').get()
-        .then((querySnapshot) => {
-          let beltCounts = {};
-          querySnapshot.forEach((doc) => {
-            const belt = doc.data().BeltLevel || 'Unknown';
-            beltCounts[belt] = (beltCounts[belt] || 0) + 1;
-          });
+      db.collection('Members').get().then((querySnapshot) => {
+        let beltCounts = {};
+        querySnapshot.forEach((doc) => {
+          const belt = doc.data().BeltLevel || 'Unknown';
+          beltCounts[belt] = (beltCounts[belt] || 0) + 1;
+        });
 
-          const labels = Object.keys(beltCounts);
-          const data = Object.values(beltCounts);
+        const labels = Object.keys(beltCounts);
+        const data = Object.values(beltCounts);
 
-          const ctx = document.getElementById('beltChart').getContext('2d');
-          new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels: labels,
-              datasets: [{
-                label: 'Number of Members',
-                data: data,
-                backgroundColor: 'rgba(128, 128, 128, .8)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-              }]
-            },
-            options: {
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  ticks: {
-                    precision: 0
-                  }
-                }
+        const ctx = document.getElementById('beltChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Number of Members',
+              data: data,
+              backgroundColor: 'rgba(128, 128, 128, .8)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { precision: 0 }
               }
             }
-          });
-        })
-        .catch((error) => {
-          console.error("Error loading belt chart: ", error);
+          }
         });
+      }).catch((error) => {
+        console.error("Error loading belt chart:", error);
+      });
     }
 
-    // Collapsible functionality: toggle display of content on header click
-    document.addEventListener("DOMContentLoaded", function() {
+    // Check-In Heatmap
+    function loadCheckInHeatmap() {
+  const dayLabels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const hourLabels = [...Array(24)].map((_, i) => `${i}:00`);
+
+  const matrix = Array.from({ length: 7 }, () => Array(24).fill(0));
+
+  db.collection("Members").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const checkIns = doc.data().CheckIns || [];
+      checkIns.forEach(entry => {
+        const rawDate = entry.date?.toDate?.() || new Date(entry.date);
+        if (!isNaN(rawDate)) {
+          const day = rawDate.getDay();
+          const hour = rawDate.getHours();
+          matrix[day][hour]++;
+        }
+      });
+    });
+
+    const data = [];
+    for (let day = 0; day < 7; day++) {
+      for (let hour = 0; hour < 24; hour++) {
+        data.push({ x: hour, y: day, v: matrix[day][hour] });
+      }
+    }
+
+    console.log("📊 Heatmap Data:", data);
+
+    const ctx = document.getElementById('checkinHeatmap').getContext('2d');
+    new Chart(ctx, {
+      type: 'matrix',
+      data: {
+        datasets: [{
+          label: 'Check-Ins',
+          data,
+          backgroundColor(ctx) {
+  const value = ctx.dataset.data[ctx.dataIndex].v;
+  const max = 20; // adjust based on your highest check-in volume
+  const intensity = Math.min(1, value / max);
+
+  const red = Math.floor(255);
+  const green = Math.floor(255 * (1 - intensity));
+  const blue = 0;
+  return `rgba(${red}, ${green}, ${blue}, ${intensity + 0.1})`;
+},
+          width: (ctx) => (ctx.chart.chartArea ? ctx.chart.chartArea.width / 24 - 2 : 30),
+          height: (ctx) => (ctx.chart.chartArea ? ctx.chart.chartArea.height / 7 - 2 : 30)
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: items => dayLabels[items[0].raw.y],
+              label: (item) => {
+  const start = item.raw.x;
+  const end = (start + 1) % 24;
+
+  const formatHour = (h) => {
+    const hour = h % 12 || 12;
+    const ampm = h < 12 || h === 24 ? 'AM' : 'PM';
+    return `${hour} ${ampm}`;
+  };
+
+  return `${formatHour(start)}–${formatHour(end)} → ${item.raw.v} check-ins`;
+}
+
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            position: 'top',
+            ticks: {
+              maxTicksLimit: 24,
+              callback: val => {
+  const h = val % 24;
+  const hour = h % 12 || 12;
+  const ampm = h < 12 ? 'AM' : 'PM';
+  return `${hour} ${ampm}`;
+}
+
+            }
+          },
+          y: {
+            type: 'linear',
+            reverse: true,
+            ticks: {
+              stepSize: 1,
+              callback: val => dayLabels[val]
+            }
+          }
+        }
+      }
+    });
+  }).catch(err => {
+    console.error("🔥 Heatmap Error:", err);
+  });
+}
+
+
+    // Collapsibles
+    document.addEventListener("DOMContentLoaded", function () {
       const headers = document.querySelectorAll('.collapsible-header');
       headers.forEach(header => {
-        header.addEventListener('click', function() {
+        header.addEventListener('click', function () {
           this.classList.toggle("active");
           const content = this.nextElementSibling;
-          if (content.style.display === "block") {
-            content.style.display = "none";
-          } else {
-            content.style.display = "block";
-          }
+          content.style.display = content.style.display === "block" ? "none" : "block";
         });
       });
     });
 
-    // Initialize both functions on window load
-    window.onload = function() {
+    // Init all
+    window.onload = function () {
       calculateProjectedRevenue();
       loadBeltChart();
+      loadCheckInHeatmap();
     };
   </script>
 </body>
