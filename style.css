@@ -253,3 +253,19 @@ tr:hover {
     font-size: 24px;
     cursor: pointer;
   }
+
+  .button-link {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #404142;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+  
+  .button-link:hover {
+    background-color: #7f9a98;
+  }
+  

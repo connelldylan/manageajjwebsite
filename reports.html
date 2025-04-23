@@ -52,18 +52,6 @@
         </div>
       </div>
 
-      <!-- Check-In Heatmap -->
-      <div class="collapsible">
-        <div class="collapsible-header">
-          Check-In Heatmap
-          <span class="toggle-icon">▼</span>
-        </div>
-        <div class="collapsible-content">
-          <canvas id="checkinHeatmap" style="max-width: 800px; margin-top: 20px;"></canvas>
-        </div>
-      </div>
-    </main>
-  </div>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -163,110 +151,6 @@ const data = labels.map(belt => beltCounts[belt]);
       });
     }
 
-    // Check-In Heatmap
-    function loadCheckInHeatmap() {
-  const dayLabels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const hourLabels = [...Array(24)].map((_, i) => `${i}:00`);
-
-  const matrix = Array.from({ length: 7 }, () => Array(24).fill(0));
-
-  db.collection("Members").get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const checkIns = doc.data().CheckIns || [];
-      checkIns.forEach(entry => {
-        const rawDate = entry.date?.toDate?.() || new Date(entry.date);
-        if (!isNaN(rawDate)) {
-          const day = rawDate.getDay();
-          const hour = rawDate.getHours();
-          matrix[day][hour]++;
-        }
-      });
-    });
-
-    const data = [];
-    for (let day = 0; day < 7; day++) {
-      for (let hour = 0; hour < 24; hour++) {
-        data.push({ x: hour, y: day, v: matrix[day][hour] });
-      }
-    }
-
-    console.log("📊 Heatmap Data:", data);
-
-    const ctx = document.getElementById('checkinHeatmap').getContext('2d');
-    new Chart(ctx, {
-      type: 'matrix',
-      data: {
-        datasets: [{
-          label: 'Check-Ins',
-          data,
-          backgroundColor(ctx) {
-  const value = ctx.dataset.data[ctx.dataIndex].v;
-  const max = 20; // adjust based on your highest check-in volume
-  const intensity = Math.min(1, value / max);
-
-  const red = Math.floor(255);
-  const green = Math.floor(255 * (1 - intensity));
-  const blue = 0;
-  return `rgba(${red}, ${green}, ${blue}, ${intensity + 0.1})`;
-},
-          width: (ctx) => (ctx.chart.chartArea ? ctx.chart.chartArea.width / 24 - 2 : 30),
-          height: (ctx) => (ctx.chart.chartArea ? ctx.chart.chartArea.height / 7 - 2 : 30)
-        }]
-      },
-      options: {
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              title: items => dayLabels[items[0].raw.y],
-              label: (item) => {
-  const start = item.raw.x;
-  const end = (start + 1) % 24;
-
-  const formatHour = (h) => {
-    const hour = h % 12 || 12;
-    const ampm = h < 12 || h === 24 ? 'AM' : 'PM';
-    return `${hour} ${ampm}`;
-  };
-
-  return `${formatHour(start)}–${formatHour(end)} → ${item.raw.v} check-ins`;
-}
-
-            }
-          }
-        },
-        scales: {
-          x: {
-            type: 'linear',
-            position: 'top',
-            ticks: {
-              maxTicksLimit: 24,
-              callback: val => {
-  const h = val % 24;
-  const hour = h % 12 || 12;
-  const ampm = h < 12 ? 'AM' : 'PM';
-  return `${hour} ${ampm}`;
-}
-
-            }
-          },
-          y: {
-            type: 'linear',
-            reverse: true,
-            ticks: {
-              stepSize: 1,
-              callback: val => dayLabels[val]
-            }
-          }
-        }
-      }
-    });
-  }).catch(err => {
-    console.error("🔥 Heatmap Error:", err);
-  });
-}
-
-
     // Collapsibles
     document.addEventListener("DOMContentLoaded", function () {
       const headers = document.querySelectorAll('.collapsible-header');
@@ -283,7 +167,6 @@ const data = labels.map(belt => beltCounts[belt]);
     window.onload = function () {
       calculateProjectedRevenue();
       loadBeltChart();
-      loadCheckInHeatmap();
     };
   </script>
 </body>

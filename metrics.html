@@ -86,6 +86,7 @@
       appId: "1:834961798562:web:525a5bbfc7f53000d4eefb",
       measurementId: "G-YE8ZCN42B2"
     };
+    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -105,7 +106,7 @@
 
       const beltCounts = {};
       docs.forEach(m => {
-        const belt = m.BeltLevel || 'Unknown';
+        const belt = m.BeltLevel || 'Unknown';    
         beltCounts[belt] = (beltCounts[belt] || 0) + 1;
       });
 
