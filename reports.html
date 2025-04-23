@@ -116,14 +116,25 @@
     // Belt Chart
     function loadBeltChart() {
       db.collection('Members').get().then((querySnapshot) => {
-        let beltCounts = {};
-        querySnapshot.forEach((doc) => {
-          const belt = doc.data().BeltLevel || 'Unknown';
-          beltCounts[belt] = (beltCounts[belt] || 0) + 1;
-        });
+        const beltOrder = ['White', 'Blue', 'Purple', 'Brown', 'Black'];
+const beltCounts = {
+  White: 0,
+  Blue: 0,
+  Purple: 0,
+  Brown: 0,
+  Black: 0
+};
 
-        const labels = Object.keys(beltCounts);
-        const data = Object.values(beltCounts);
+querySnapshot.forEach((doc) => {
+  const belt = (doc.data().BeltLevel || 'Unknown').trim();
+  if (beltCounts.hasOwnProperty(belt)) {
+    beltCounts[belt]++;
+  }
+});
+
+const labels = beltOrder;
+const data = labels.map(belt => beltCounts[belt]);
+
 
         const ctx = document.getElementById('beltChart').getContext('2d');
         new Chart(ctx, {
@@ -133,7 +144,7 @@
             datasets: [{
               label: 'Number of Members',
               data: data,
-              backgroundColor: 'rgba(128, 128, 128, .8)',
+              backgroundColor: 'rgba(231, 76, 60, 1)',
               borderColor: 'rgba(75, 192, 192, 1)',
               borderWidth: 1
             }]

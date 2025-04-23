@@ -44,6 +44,7 @@
               <th>Belt Level</th>
               <th>Subscription</th>
               <th>Check-Ins</th>
+              <th>Password</th>
             </tr>
           </thead>
           <tbody id="customers-tbody">
@@ -87,6 +88,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    
     function formatPhoneNumber(phone) {
       if (!phone) return 'N/A';
       const digits = phone.replace(/\D/g, '');
@@ -137,6 +139,7 @@
                 ${checkInCount} Check-In(s)
                 ${checkInCount > 0 ? `<button class="view-btn" onclick="showCheckIns('${doc.id}')">View</button>` : ''}
               </td>
+              <td>${member.Password || 'N/A'}</td>
             `;
 
             tbody.appendChild(row);

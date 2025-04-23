@@ -1,215 +1,161 @@
-<script>
-    if (sessionStorage.getItem('isAdmin') !== 'true') {
-      window.location.href = 'index.html';
-    }
-  </script>
-  
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Key Metrics</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .chart-container {
+      max-width: 360px;
+      margin: 30px auto;
+      text-align: center;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
 </head>
 <body>
-<script>
-  if (sessionStorage.getItem('isAdmin') !== 'true') {
-    window.location.href = 'index.html';
-  }
-</script>
+  <script>
+    if (sessionStorage.getItem('isAdmin') !== 'true') {
+      window.location.href = 'index.html';
+    }
+  </script>
 
-<div class="container">
-  <nav class="sidebar">
-    <h2>Analytics</h2>
-    <ul>
-      <li><a href="overview.html">Overview</a></li>
-      <li><a href="customers.html">Members</a></li>
-      <li><a href="metrics.html">Key Metrics</a></li>
-      <li><a href="reports.html">Reports</a></li>
-      <li><a href="settings.html">Settings</a></li>
-    </ul>
-  </nav>
+  <div class="container">
+    <nav class="sidebar">
+      <h2>Analytics</h2>
+      <ul>
+        <li><a href="overview.html">Overview</a></li>
+        <li><a href="customers.html">Members</a></li>
+        <li><a href="metrics.html" class="active">Key Metrics</a></li>
+        <li><a href="reports.html">Reports</a></li>
+        <li><a href="settings.html">Settings</a></li>
+      </ul>
+    </nav>
 
-  <main class="main-content">
-    <div class="header">
-      <h1>Key Metrics</h1>
-      <p>Insights and member analytics</p>
-    </div>
+    <main class="main-content">
+      <div class="header">
+        <h1>Key Metrics</h1>
+        <p>At‑a‑glance performance indicators</p>
+      </div>
 
-    <div class="collapsible">
-      <div class="collapsible-header">Total Members <span class="toggle-icon">▼</span></div>
-      <div class="collapsible-content"><p id="totalMembers">Loading...</p></div>
-    </div>
+      <!-- Metrics Cards -->
+      <div class="dashboard-grid">
+        <div class="card">
+          <h3>Total Members</h3>
+          <p id="total-members">…</p>
+        </div>
+        <div class="card">
+          <h3>Projected Annual Revenue</h3>
+          <p id="annual-revenue">…</p>
+        </div>
+        <div class="card">
+          <h3>Avg. Check‑Ins per Member</h3>
+          <p id="avg-checkins">…</p>
+        </div>
+        <div class="card">
+          <h3>Avg. Subscription ($/mo)</h3>
+          <p id="avg-subscription">…</p>
+        </div>
+      </div>
 
-    <div class="collapsible">
-      <div class="collapsible-header">New Members This Month <span class="toggle-icon">▼</span></div>
-      <div class="collapsible-content"><p id="newMembers">Loading...</p></div>
-    </div>
+      <!-- Belt Level Distribution -->
+      <div class="chart-container">
+        <h3>Belt Level Distribution</h3>
+        <canvas id="beltPieChart" width="300" height="300"></canvas>
+      </div>
+    </main>
+  </div>
 
-    <div class="collapsible">
-      <div class="collapsible-header">Average Subscription Value <span class="toggle-icon">▼</span></div>
-      <div class="collapsible-content"><p id="avgSub">Loading...</p></div>
-    </div>
+  <!-- Firebase & Chart.js -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <div class="collapsible">
-      <div class="collapsible-header">Monthly Check-Ins <span class="toggle-icon">▼</span></div>
-      <div class="collapsible-content"><canvas id="monthlyCheckinsChart"></canvas></div>
-    </div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCbZ7xXq3ymeWRgXDjOsu-xMvEKwv33ig8",
+      authDomain: "member-management-system-cb2dc.firebaseapp.com",
+      projectId: "member-management-system-cb2dc",
+      storageBucket: "member-management-system-cb2dc.appspot.com",
+      messagingSenderId: "834961798562",
+      appId: "1:834961798562:web:525a5bbfc7f53000d4eefb",
+      measurementId: "G-YE8ZCN42B2"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    <div class="collapsible">
-      <div class="collapsible-header">Most Active Members (Top 5) <span class="toggle-icon">▼</span></div>
-      <div class="collapsible-content"><ul id="topMembersList"></ul></div>
-    </div>
+    async function loadMetrics() {
+      const snapshot = await db.collection('Members').get();
+      const docs = snapshot.docs.map(d => d.data());
 
-    <div class="collapsible">
-      <div class="collapsible-header">Age Distribution <span class="toggle-icon">▼</span></div>
-      <div class="collapsible-content"><canvas id="ageChart"></canvas></div>
-    </div>
-  </main>
-</div>
+      const total = docs.length;
+      const totalRevenue = docs.reduce((sum, m) => sum + (parseFloat(m.Subscription) || 0) * 12, 0);
+      const totalSubscriptions = docs.reduce((sum, m) => sum + (parseFloat(m.Subscription) || 0), 0);
+      const totalCheckins = docs.reduce((sum, m) => sum + ((Array.isArray(m.CheckIns) ? m.CheckIns.length : 0)), 0);
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+      document.getElementById('total-members').innerText = total;
+      document.getElementById('annual-revenue').innerText = `$${totalRevenue.toFixed(2)}`;
+      document.getElementById('avg-checkins').innerText = (total ? (totalCheckins / total).toFixed(1) : '0');
+      document.getElementById('avg-subscription').innerText = `$${(total ? (totalSubscriptions / total).toFixed(2) : '0')}`;
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCbZ7xXq3ymeWRgXDjOsu-xMvEKwv33ig8",
-    authDomain: "member-management-system-cb2dc.firebaseapp.com",
-    projectId: "member-management-system-cb2dc"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  function loadMetrics() {
-    const now = new Date();
-    const thisMonth = now.getMonth();
-    const thisYear = now.getFullYear();
-
-    let total = 0, newMembers = 0, totalSub = 0;
-    let monthlyCounts = Array(12).fill(0);
-    let checkInMap = {};
-    let ageBuckets = { 'Under 20': 0, '20s': 0, '30s': 0, '40s': 0, '50+': 0 };
-
-    db.collection("Members").get().then(snapshot => {
-      const topMembers = [];
-
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        total++;
-        totalSub += parseFloat(d.Subscription) || 0;
-
-        // New Members
-        const joinDate = d.JoinDate?.toDate?.() || new Date(d.JoinDate);
-        if (joinDate.getMonth() === thisMonth && joinDate.getFullYear() === thisYear) {
-          newMembers++;
-        }
-
-        // Monthly Check-Ins
-        (d.CheckIns || []).forEach(entry => {
-          const checkDate = entry.date?.toDate?.() || new Date(entry.date);
-          const month = checkDate.getMonth();
-          if (!isNaN(month)) monthlyCounts[month]++;
-
-          const id = doc.id;
-          checkInMap[id] = (checkInMap[id] || 0) + 1;
-        });
-
-        // Age Calculation
-        const birthDate = d.BirthDate?.toDate?.() || new Date(d.BirthDate);
-        if (!isNaN(birthDate)) {
-          const age = Math.floor((now - birthDate) / (365.25 * 24 * 60 * 60 * 1000));
-          if (age < 20) ageBuckets['Under 20']++;
-          else if (age < 30) ageBuckets['20s']++;
-          else if (age < 40) ageBuckets['30s']++;
-          else if (age < 50) ageBuckets['40s']++;
-          else ageBuckets['50+']++;
-        }
+      const beltCounts = {};
+      docs.forEach(m => {
+        const belt = m.BeltLevel || 'Unknown';
+        beltCounts[belt] = (beltCounts[belt] || 0) + 1;
       });
 
-      // Total Members
-      document.getElementById("totalMembers").textContent = total;
+      const labels = Object.keys(beltCounts);
+      const data = Object.values(beltCounts);
 
-      // New Members
-      document.getElementById("newMembers").textContent = newMembers;
+      const beltColorMap = {
+        'White': '#ecf0f1',    // Light gray instead of pure white
+        'Blue': '#1a42ba',
+        'Purple': '#61215C',
+        'Brown': '#4B351d',
+        'Black': '#000000',
+        'Unknown': '#bdc3c7'
+      };
 
-      // Avg Subscription
-      const avg = total > 0 ? (totalSub / total).toFixed(2) : 0;
-      document.getElementById("avgSub").textContent = `$${avg}`;
+      const backgroundColors = labels.map(label => beltColorMap[label] || '#95a5a6');
+      const borderColors = labels.map(label => beltColorMap[label] || '#7f8c8d');
 
-      // Monthly Check-In Chart
-      new Chart(document.getElementById("monthlyCheckinsChart").getContext("2d"), {
-        type: 'bar',
+      const ctx = document.getElementById('beltPieChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'pie',
         data: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+          labels,
           datasets: [{
-            label: 'Check-Ins',
-            data: monthlyCounts,
-            backgroundColor: '#000080'
+            data,
+            backgroundColor: backgroundColors,
+            borderColor: borderColors,
+            borderWidth: 1
           }]
         },
         options: {
-          responsive: true,
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+          responsive: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          },
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const belt = labels[index];
+              const count = data[index];
+              alert(`${belt} Belt: ${count} member(s)`);
+            }
+          }
         }
       });
+    }
 
-      // Most Active Members
-      // Convert checkInMap to include name references
-const memberNames = {};
-snapshot.forEach(doc => {
-  const d = doc.data();
-  memberNames[doc.id] = d.Name || 'Unknown';
-});
-
-const sorted = Object.entries(checkInMap)
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 5);
-
-const topList = document.getElementById("topMembersList");
-topList.innerHTML = '';
-sorted.forEach(([id, count]) => {
-  const name = memberNames[id] || id;
-  topList.innerHTML += `<li>${name} — ${count} check-ins</li>`;
-});
-
-
-      // Age Chart
-      new Chart(document.getElementById("ageChart").getContext("2d"), {
-        type: 'bar',
-        data: {
-          labels: Object.keys(ageBuckets),
-          datasets: [{
-            label: 'Members',
-            data: Object.values(ageBuckets),
-            backgroundColor: '#e74c3c'
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-        }
-      });
-
-    });
-  }
-
-  // Collapsibles
-  document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll('.collapsible-header').forEach(header => {
-      header.addEventListener('click', () => {
-        header.classList.toggle("active");
-        const content = header.nextElementSibling;
-        content.style.display = content.style.display === "block" ? "none" : "block";
-      });
-    });
-    loadMetrics();
-  });
-</script>
+    window.onload = loadMetrics;
+  </script>
 </body>
 </html>
