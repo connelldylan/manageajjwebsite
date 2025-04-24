@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - La Crosse American Jiu Jitsu</title>
+    <link rel="stylesheet" href="plugins/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="plugins/Ionicons/css/ionicons.min.css">
+    <link rel="stylesheet" href="plugins/animate-css/animate.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .signup-container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+        .signup-container h1 {
+            color: #000080;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: #000080;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 0, 128, 0.3);
+        }
+        .btn-submit {
+            background-color: #000080;
+            color: #fff;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+        .btn-submit:hover {
+            background-color: #000066;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        .success-message {
+            color: #28a745;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .home-btn {
+            color: #007bff;
+            border: 1px solid #007bff;
+            padding: 8px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .home-btn:hover {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .success-banner {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            text-align: center;
+            padding-top: 20vh;
+            z-index: 1000;
+        }
+        .success-banner h2 {
+            font-size: 48px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        .success-banner p {
+            font-size: 24px;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <header class="navigation">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <nav class="navbar navbar-expand-lg p-0">
+                        <div class="navbar-brand">
+                            <img src="images/TomDeblassLogo_Circle.png" alt="Logo" style="height:45px; width:45px; margin-right: 8px;">
+                            <img src="images/AJJ_Logo_Circle.png" alt="Logo" style="height:45px; width:45px; margin-right: 8px;">
+                        </div>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="signup-container">
+        <h1>Member Sign Up</h1>
+        <div class="success-message" id="successMessage">Sign-up successful! Redirecting...</div>
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" required>
+                <div class="error-message" id="nameError">Please enter your full name.</div>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+                <div class="error-message" id="emailError">Please enter a valid email address.</div>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+                <div class="error-message" id="passwordError">Password must be at least 6 characters.</div>
+            </div>
+            <div class="form-group">
+                <label for="phoneNumber">Phone Number</label>
+                <input type="tel" id="phoneNumber" required>
+                <div class="error-message" id="phoneNumberError">Please enter a valid phone number.</div>
+            </div>
+            <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" id="address" required>
+                <div class="error-message" id="addressError">Please enter your address.</div>
+            </div>
+            <div class="form-group">
+                <label for="birthDate">Birth Date</label>
+                <input type="date" id="birthDate" required>
+                <div class="error-message" id="birthDateError">Please enter a valid birth date.</div>
+            </div>
+            <div class="form-group">
+                <label for="beltLevel">Belt Level</label>
+                <select id="beltLevel" required>
+                    <option value="" disabled selected>Select Belt Level</option>
+                    <option value="White">White</option>
+                    <option value="Blue">Blue</option>
+                    <option value="Purple">Purple</option>
+                    <option value="Brown">Brown</option>
+                    <option value="Black">Black</option>
+                </select>
+                <div class="error-message" id="beltLevelError">Please select a belt level.</div>
+            </div>
+            <div class="form-group">
+                <label for="subscription">Subscription ($/month)</label>
+                <input type="number" id="subscription" required min="0" step="0.01">
+                <div class="error-message" id="subscriptionError">Please enter a valid subscription amount.</div>
+            </div>
+            <button type="submit" class="btn-submit">Sign Up</button>
+        </form>
+    </section>
+
+    <div class="success-banner" id="successBanner">
+        <h2>Member Successfully Registered!</h2>
+        <p>This page will close in 5 seconds.</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbZ7xXq3ymeWRgXDjOsu-xMvEKwv33ig8",
+            authDomain: "member-management-system-cb2dc.firebaseapp.com",
+            projectId: "member-management-system-cb2dc",
+            storageBucket: "member-management-system-cb2dc.firebasestorage.app",
+            messagingSenderId: "834961798562",
+            appId: "1:834961798562:web:525a5bbfc7f53000d4eefb",
+            measurementId: "G-YE8ZCN42B2"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const signupForm = document.getElementById('signupForm');
+        const successMessage = document.getElementById('successMessage');
+        const successBanner = document.getElementById('successBanner');
+
+        function showError(inputId, message) {
+            const errorElement = document.getElementById(`${inputId}Error`);
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        function clearErrors() {
+            const errorElements = document.querySelectorAll('.error-message');
+            errorElements.forEach(element => {
+                element.style.display = 'none';
+            });
+        }
+
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearErrors();
+
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const birthDate = document.getElementById('birthDate').value;
+            const beltLevel = document.getElementById('beltLevel').value;
+            const subscription = parseFloat(document.getElementById('subscription').value);
+
+            let hasError = false;
+
+            if (!name) {
+                showError('name', 'Please enter your full name.');
+                hasError = true;
+            }
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showError('email', 'Please enter a valid email address.');
+                hasError = true;
+            }
+            if (password.length < 6) {
+                showError('password', 'Password must be at least 6 characters.');
+                hasError = true;
+            }
+            if (!phoneNumber || !/^\+?[\d\s-]{10,}$/.test(phoneNumber)) {
+                showError('phoneNumber', 'Please enter a valid phone number.');
+                hasError = true;
+            }
+            if (!address) {
+                showError('address', 'Please enter your address.');
+                hasError = true;
+            }
+            if (!birthDate) {
+                showError('birthDate', 'Please enter a valid birth date.');
+                hasError = true;
+            }
+            if (!beltLevel) {
+                showError('beltLevel', 'Please select a belt level.');
+                hasError = true;
+            }
+            if (isNaN(subscription) || subscription < 0) {
+                showError('subscription', 'Please enter a valid subscription amount.');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            try {
+                // Check if email already exists
+                const q = query(collection(db, 'Members'), where('Email', '==', email));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    showError('email', 'This email is already registered.');
+                    return;
+                }
+
+                // Add new member to Firestore
+                await addDoc(collection(db, 'Members'), {
+                    Name: name,
+                    Email: email,
+                    Password: password, // Note: In a production environment, passwords should be hashed
+                    PhoneNumber: phoneNumber,
+                    Address: address,
+                    BirthDate: new Date(birthDate),
+                    BeltLevel: beltLevel,
+                    Subscription: subscription,
+                    JoinDate: new Date(),
+                    CheckIns: []
+                });
+
+                // Show success banner
+                successBanner.style.display = 'block';
+                signupForm.reset();
+
+                // Close page after 5 seconds
+                setTimeout(() => {
+                    window.close();
+                }, 5000);
+            } catch (error) {
+                console.error('Error adding member:', error);
+                showError('email', 'An error occurred during sign-up. Please try again.');
+            }
+        });
+    </script>
+
+    <script src="plugins/jquery/jquery.min.js"></script>
+    <script src="plugins/bootstrap/bootstrap.min.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>
