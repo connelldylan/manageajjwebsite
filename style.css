@@ -255,7 +255,7 @@ tr:hover {
   }
 
   .button-link {
-    display: inline-block;
+    display: inline-block;  
     padding: 10px 20px;
     background-color: #404142;
     color: white;

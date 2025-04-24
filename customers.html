@@ -1,18 +1,106 @@
-<script>
-  if (sessionStorage.getItem('isAdmin') !== 'true') {
-    window.location.href = 'index.html';
-  }
-</script>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Customers List</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Revenue Report</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background-color: #f2f4f8;
+      color: #333;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 30px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 20px;
+      color: #000080;
+    }
+
+    .section {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+      margin-bottom: 30px;
+    }
+
+    .year-button {
+      padding: 10px 16px;
+      margin: 6px;
+      border: none;
+      border-radius: 6px;
+      background: #000080;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .year-button:hover, .year-button.active {
+      background: #3498db;
+    }
+
+    .revenue-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .revenue-table th, .revenue-table td {
+      padding: 14px;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: left;
+    }
+
+    .revenue-table th {
+      background-color: #000080;
+      color: white;
+    }
+
+    .download-btn, .dark-toggle {
+      padding: 10px 14px;
+      margin: 10px 6px 20px 0;
+      border: none;
+      background-color: #000080;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .dark-mode {
+      background-color: #1e1e2f;
+      color: #ddd;
+    }
+    .dark-mode .section {
+      background: #2c2f4a;
+    }
+    .dark-mode .revenue-table th {
+      background-color: #444;
+    }
+    .dark-mode .year-button, .dark-mode .download-btn, .dark-mode .dark-toggle {
+      background-color: #444;
+    }
+  </style>
 </head>
 <body>
+  <script>
+    if (sessionStorage.getItem('isAdmin') !== 'true') {
+      window.location.href = 'index.html';
+    }
+  </script>
+
   <div class="container">
     <nav class="sidebar">
       <h2>Analytics</h2>
@@ -20,57 +108,26 @@
         <li><a href="overview.html">Overview</a></li>
         <li><a href="customers.html">Members</a></li>
         <li><a href="metrics.html">Key Metrics</a></li>
-        <li><a href="reports.html">Reports</a></li>
-        <li><a href="settings.html">Settings</a></li>
+        <li><a href="reports.html" class="active">Revenue Reports</a></li>
+        <li><a href="settings.html">Add New Member</a></li>
       </ul>
     </nav>
 
     <main class="main-content">
       <div class="header">
-        <h1>Member List</h1>
-        <p>All registered members</p>
+        <h1>Revenue Breakdown</h1>
+        <button class="download-btn" onclick="exportCSV()">Download CSV</button>
+        <button class="dark-toggle" onclick="toggleDarkMode()">Toggle Dark Mode</button>
       </div>
 
-      <div class="table-container" style="overflow-x: auto;">
-        <table id="customers-table" style="min-width: 1000px;">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Address</th>
-              <th>Birth Date</th>
-              <th>Join Date</th>
-              <th>Belt Level</th>
-              <th>Subscription</th>
-              <th>Check-Ins</th>
-              <th>Password</th>
-            </tr>
-          </thead>
-          <tbody id="customers-tbody">
-            <!-- Data will be populated here -->
-          </tbody>
-        </table>
+      <div class="section">
+        <h2>Monthly Revenue by Year</h2>
+        <div id="year-buttons"></div>
+        <div id="monthly-table-container"></div>
       </div>
     </main>
   </div>
 
-  <!-- Modal for Check-Ins -->
-  <div id="checkinModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Check-Ins</h2>
-        <button class="close-btn" onclick="closeModal()">&times;</button>
-      </div>
-      <div class="checkin-controls" style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="margin: 0;">Check-In History</h3>
-        <button id="sortToggleBtn" onclick="toggleSortOrder()" style="padding: 5px 10px; cursor: pointer;">Sort: Descending</button>
-      </div>
-      <div id="checkinDetails" style="margin-top: 10px;"></div>
-    </div>
-  </div>
-
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
@@ -79,166 +136,102 @@
       apiKey: "AIzaSyCbZ7xXq3ymeWRgXDjOsu-xMvEKwv33ig8",
       authDomain: "member-management-system-cb2dc.firebaseapp.com",
       projectId: "member-management-system-cb2dc",
-      storageBucket: "member-management-system-cb2dc.firebasestorage.app",
-      messagingSenderId: "834961798562",
-      appId: "1:834961798562:web:525a5bbfc7f53000d4eefb",
-      measurementId: "G-YE8ZCN42B2"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    
-    function formatPhoneNumber(phone) {
-      if (!phone) return 'N/A';
-      const digits = phone.replace(/\D/g, '');
-      return digits.length === 10
-        ? `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
-        : phone || 'N/A';
-    }
+    const checkInData = {};
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-    function formatDate(field) {
-      try {
-        if (field?.toDate) {
-          return field.toDate().toLocaleDateString();
-        } else {
-          const d = new Date(field);
-          return !isNaN(d.getTime()) ? d.toLocaleDateString() : 'Invalid Date';
-        }
-      } catch {
-        return 'Invalid Date';
-      }
-    }
-
-    function loadMembers() {
-      const tbody = document.getElementById('customers-tbody');
-      tbody.innerHTML = '';
-
-      db.collection('Members').get()
-        .then((querySnapshot) => {
-          if (querySnapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="9">No members found</td></tr>';
-            return;
-          }
-
-          querySnapshot.forEach((doc) => {
-            const member = doc.data();
-            const row = document.createElement('tr');
-            const checkInCount = Array.isArray(member.CheckIns) ? member.CheckIns.length : 0;
-
-            row.innerHTML = `
-              <td>${member.Name || 'N/A'}</td>
-              <td>${member.Email || 'N/A'}</td>
-              <td>${formatPhoneNumber(member.PhoneNumber)}</td>
-              <td>${member.Address || 'N/A'}</td>
-              <td>${formatDate(member.BirthDate)}</td>
-              <td>${formatDate(member.JoinDate)}</td>
-              <td>${member.BeltLevel || 'N/A'}</td>
-              <td>${member.Subscription || 'N/A'}</td>
-              <td>
-                ${checkInCount} Check-In(s)
-                ${checkInCount > 0 ? `<button class="view-btn" onclick="showCheckIns('${doc.id}')">View</button>` : ''}
-              </td>
-              <td>${member.Password || 'N/A'}</td>
-            `;
-
-            tbody.appendChild(row);
+    async function fetchRevenueData() {
+      const snapshot = await db.collection('Members').get();
+      snapshot.forEach(doc => {
+        const member = doc.data();
+        const sub = parseFloat(member.Subscription || 0);
+        if (!isNaN(sub)) {
+          (member.CheckIns || []).forEach(entry => {
+            const date = entry.date?.toDate?.() || new Date(entry.date);
+            if (!isNaN(date)) {
+              const year = date.getFullYear();
+              const month = date.getMonth();
+              checkInData[year] = checkInData[year] || Array(12).fill(0);
+              checkInData[year][month] += sub;
+            }
           });
-        })
-        .catch((error) => {
-          console.error("Error getting members: ", error);
-          tbody.innerHTML = `<tr><td colspan="9">Error loading members: ${error.message}</td></tr>`;
-        });
+        }
+      });
+      renderYearButtons();
     }
 
-    // Globals for sorting
-    let currentSortOrder = 'desc';
-    let currentCheckIns = [];
+    function renderYearButtons() {
+      const years = Object.keys(checkInData).sort((a, b) => b - a);
+      const container = document.getElementById('year-buttons');
+      container.innerHTML = '';
 
-    function showCheckIns(docId) {
-      const modal = document.getElementById('checkinModal');
-      const details = document.getElementById('checkinDetails');
-      const sortBtn = document.getElementById('sortToggleBtn');
-      details.innerHTML = 'Loading...';
-
-      db.collection('Members').doc(docId).get()
-        .then((doc) => {
-          if (!doc.exists) {
-            details.innerHTML = 'No data found.';
-            return;
-          }
-
-          const data = doc.data();
-          currentCheckIns = Array.isArray(data.CheckIns) ? data.CheckIns : [];
-
-          if (currentCheckIns.length === 0) {
-            details.innerHTML = 'No check-ins recorded.';
-            return;
-          }
-
-          renderCheckIns(); // Render initially
-        })
-        .catch((error) => {
-          details.innerHTML = `Error loading check-ins: ${error.message}`;
-        });
-
-      modal.style.display = 'block';
-    }
-
-    function renderCheckIns() {
-      const details = document.getElementById('checkinDetails');
-      const sortBtn = document.getElementById('sortToggleBtn');
-
-      currentCheckIns.sort((a, b) => {
-        const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
-        const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
-        return currentSortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      years.forEach((year, index) => {
+        const btn = document.createElement('button');
+        btn.textContent = year;
+        btn.className = 'year-button' + (index === 0 ? ' active' : '');
+        btn.onclick = () => {
+          document.querySelectorAll('.year-button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          renderRevenueTable(parseInt(year));
+        };
+        container.appendChild(btn);
       });
 
-      let tableHTML = `
-        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-          <thead>
-            <tr>
-              <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ccc;">#</th>
-              <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ccc;">Check-In Date</th>
-            </tr>
-          </thead>
-          <tbody>
+      if (years.length) renderRevenueTable(parseInt(years[0]));
+    }
+
+    function renderRevenueTable(year) {
+      let rows = '';
+      let total = 0;
+
+      for (let i = 0; i < 12; i++) {
+        const revenue = checkInData[year][i];
+        const lastMonth = checkInData[year][i - 1] || 0;
+        const diff = lastMonth ? ((revenue - lastMonth) / lastMonth * 100).toFixed(1) : '—';
+        total += revenue;
+        rows += `<tr><td>${monthNames[i]}</td><td>$${revenue.toFixed(2)}</td><td>${diff === '—' ? diff : `${diff}%`}</td></tr>`;
+      }
+      rows += `<tr style="font-weight: bold;"><td>Total</td><td>$${total.toFixed(2)}</td><td>—</td></tr>`;
+
+      document.getElementById('monthly-table-container').innerHTML = `
+        <table class="revenue-table">
+          <thead><tr><th>Month</th><th>Revenue ($)</th><th>MoM Change</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
       `;
-
-      currentCheckIns.forEach((entry, index) => {
-        let dateStr = 'Invalid Date';
-        try {
-          const date = entry.date?.toDate ? entry.date.toDate() : new Date(entry.date);
-          if (!isNaN(date.getTime())) {
-            dateStr = date.toLocaleString();
-          }
-        } catch {}
-
-        tableHTML += `
-          <tr>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${index + 1}</td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${dateStr}</td>
-          </tr>
-        `;
-      });
-
-      tableHTML += `</tbody></table>`;
-      details.innerHTML = tableHTML;
-
-      sortBtn.textContent = `Sort: ${currentSortOrder === 'asc' ? 'Ascending' : 'Descending'}`;
     }
 
-    function toggleSortOrder() {
-      currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
-      renderCheckIns();
+    function exportCSV() {
+      const activeYearBtn = document.querySelector('.year-button.active');
+      if (!activeYearBtn) return;
+      const year = parseInt(activeYearBtn.textContent);
+      let csv = 'Month,Revenue ($),MoM Change\n';
+      let total = 0;
+      for (let i = 0; i < 12; i++) {
+        const revenue = checkInData[year][i];
+        const lastMonth = checkInData[year][i - 1] || 0;
+        const diff = lastMonth ? ((revenue - lastMonth) / lastMonth * 100).toFixed(1) + '%' : '—';
+        total += revenue;
+        csv += `${monthNames[i]},$${revenue.toFixed(2)},${diff}\n`;
+      }
+      csv += `Total,$${total.toFixed(2)},—\n`;
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Monthly_Revenue_${year}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
-    function closeModal() {
-      document.getElementById('checkinModal').style.display = 'none';
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
     }
 
-    window.onload = loadMembers;
+    window.onload = fetchRevenueData;
   </script>
 </body>
 </html>

@@ -3,8 +3,82 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reports - Projected Yearly Sales Revenue</title>
+  <title>Revenue Report</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background-color: #f2f4f8;
+      color: #333;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 30px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 20px;
+      color: #000080;
+    }
+
+    .section {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+      margin-bottom: 30px;
+    }
+
+    .year-button {
+      padding: 10px 16px;
+      margin: 6px;
+      border: none;
+      border-radius: 6px;
+      background: #000080;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .year-button:hover, .year-button.active {
+      background: #3498db;
+    }
+
+    .revenue-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .revenue-table th, .revenue-table td {
+      padding: 14px;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: left;
+    }
+
+    .revenue-table th {
+      background-color: #000080;
+      color: white;
+    }
+
+    .download-btn {
+      padding: 10px 14px;
+      margin: 10px 6px 20px 0;
+      border: none;
+      background-color: #000080;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
   <script>
@@ -20,154 +94,125 @@
         <li><a href="overview.html">Overview</a></li>
         <li><a href="customers.html">Members</a></li>
         <li><a href="metrics.html">Key Metrics</a></li>
-        <li><a href="reports.html">Reports</a></li>
+        <li><a href="reports.html" class="active">Reports</a></li>
         <li><a href="settings.html">Settings</a></li>
       </ul>
     </nav>
 
     <main class="main-content">
       <div class="header">
-        <h1>Reports</h1>
+        <h1>Revenue Breakdown</h1>
+        <button class="download-btn" onclick="exportCSV()">Download CSV</button>
       </div>
 
-      <!-- Projected Revenue -->
-      <div class="collapsible">
-        <div class="collapsible-header">
-          Projected Yearly Sales Revenue
-          <span class="toggle-icon">▼</span>
-        </div>
-        <div class="collapsible-content">
-          <p id="projected-revenue">Loading...</p>
-        </div>
+      <div class="section">
+        <h2>Monthly Revenue by Year</h2>
+        <div id="year-buttons"></div>
+        <div id="monthly-table-container"></div>
       </div>
+    </main>
+  </div>
 
-      <!-- Members by Belt Level -->
-      <div class="collapsible">
-        <div class="collapsible-header">
-          Members by Belt Level
-          <span class="toggle-icon">▼</span>
-        </div>
-        <div class="collapsible-content">
-          <canvas id="beltChart"></canvas>
-        </div>
-      </div>
-
-
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Matrix Chart plugin for heatmap -->
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@1.2.0/dist/chartjs-chart-matrix.min.js"></script>
 
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCbZ7xXq3ymeWRgXDjOsu-xMvEKwv33ig8",
       authDomain: "member-management-system-cb2dc.firebaseapp.com",
       projectId: "member-management-system-cb2dc",
-      storageBucket: "member-management-system-cb2dc.appspot.com",
-      messagingSenderId: "834961798562",
-      appId: "1:834961798562:web:525a5bbfc7f53000d4eefb",
-      measurementId: "G-YE8ZCN42B2"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Projected Revenue
-    function calculateProjectedRevenue() {
-      const revenueElement = document.getElementById('projected-revenue');
-      revenueElement.textContent = "Calculating...";
-      let totalRevenue = 0;
+    const checkInData = {};
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-      db.collection('Members').get().then((querySnapshot) => {
-        if (querySnapshot.empty) {
-          revenueElement.textContent = "No members found.";
-          return;
-        }
-        querySnapshot.forEach((doc) => {
-          const member = doc.data();
-          const subscription = parseFloat(member.Subscription);
-          if (!isNaN(subscription)) {
-            totalRevenue += subscription * 12;
-          }
-        });
-        revenueElement.textContent = "$" + totalRevenue.toFixed(2);
-      }).catch((error) => {
-        console.error("Error calculating projected revenue:", error);
-        revenueElement.textContent = "Error loading projected revenue: " + error.message;
-      });
-    }
-
-    // Belt Chart
-    function loadBeltChart() {
-      db.collection('Members').get().then((querySnapshot) => {
-        const beltOrder = ['White', 'Blue', 'Purple', 'Brown', 'Black'];
-const beltCounts = {
-  White: 0,
-  Blue: 0,
-  Purple: 0,
-  Brown: 0,
-  Black: 0
-};
-
-querySnapshot.forEach((doc) => {
-  const belt = (doc.data().BeltLevel || 'Unknown').trim();
-  if (beltCounts.hasOwnProperty(belt)) {
-    beltCounts[belt]++;
-  }
-});
-
-const labels = beltOrder;
-const data = labels.map(belt => beltCounts[belt]);
-
-
-        const ctx = document.getElementById('beltChart').getContext('2d');
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'Number of Members',
-              data: data,
-              backgroundColor: 'rgba(231, 76, 60, 1)',
-              borderColor: 'rgba(75, 192, 192, 1)',
-              borderWidth: 1
-            }]
-          },
-          options: {
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: { precision: 0 }
-              }
+    async function fetchRevenueData() {
+      const snapshot = await db.collection('Members').get();
+      snapshot.forEach(doc => {
+        const member = doc.data();
+        const sub = parseFloat(member.Subscription || 0);
+        if (!isNaN(sub)) {
+          (member.CheckIns || []).forEach(entry => {
+            const date = entry.date?.toDate?.() || new Date(entry.date);
+            if (!isNaN(date)) {
+              const year = date.getFullYear();
+              const month = date.getMonth();
+              checkInData[year] = checkInData[year] || Array(12).fill(0);
+              checkInData[year][month] += sub;
             }
-          }
-        });
-      }).catch((error) => {
-        console.error("Error loading belt chart:", error);
+          });
+        }
       });
+      renderYearButtons();
     }
 
-    // Collapsibles
-    document.addEventListener("DOMContentLoaded", function () {
-      const headers = document.querySelectorAll('.collapsible-header');
-      headers.forEach(header => {
-        header.addEventListener('click', function () {
-          this.classList.toggle("active");
-          const content = this.nextElementSibling;
-          content.style.display = content.style.display === "block" ? "none" : "block";
-        });
-      });
-    });
+    function renderYearButtons() {
+      const years = Object.keys(checkInData).sort((a, b) => b - a);
+      const container = document.getElementById('year-buttons');
+      container.innerHTML = '';
 
-    // Init all
-    window.onload = function () {
-      calculateProjectedRevenue();
-      loadBeltChart();
-    };
+      years.forEach((year, index) => {
+        const btn = document.createElement('button');
+        btn.textContent = year;
+        btn.className = 'year-button' + (index === 0 ? ' active' : '');
+        btn.onclick = () => {
+          document.querySelectorAll('.year-button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          renderRevenueTable(parseInt(year));
+        };
+        container.appendChild(btn);
+      });
+
+      if (years.length) renderRevenueTable(parseInt(years[0]));
+    }
+
+    function renderRevenueTable(year) {
+      let rows = '';
+      let total = 0;
+
+      for (let i = 0; i < 12; i++) {
+        const revenue = checkInData[year][i];
+        const lastMonth = checkInData[year][i - 1] || 0;
+        const diff = lastMonth ? ((revenue - lastMonth) / lastMonth * 100).toFixed(1) + '%' : '-';
+        total += revenue;
+        rows += `<tr><td>${monthNames[i]}</td><td>$${revenue.toFixed(2)}</td><td>${diff}</td></tr>`;
+      }
+      rows += `<tr style="font-weight: bold;"><td>Total</td><td>$${total.toFixed(2)}</td><td>-</td></tr>`;
+
+      document.getElementById('monthly-table-container').innerHTML = `
+        <table class="revenue-table">
+          <thead><tr><th>Month</th><th>Revenue ($)</th><th>MoM Change</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function exportCSV() {
+      const activeYearBtn = document.querySelector('.year-button.active');
+      if (!activeYearBtn) return;
+      const year = parseInt(activeYearBtn.textContent);
+      let csv = 'Month,Revenue ($),MoM Change\n';
+      let total = 0;
+      for (let i = 0; i < 12; i++) {
+        const revenue = checkInData[year][i];
+        const lastMonth = checkInData[year][i - 1] || 0;
+        const diff = lastMonth ? ((revenue - lastMonth) / lastMonth * 100).toFixed(1) + '%' : '-';
+        total += revenue;
+        csv += `${monthNames[i]},$${revenue.toFixed(2)},${diff}\n`;
+      }
+      csv += `Total,$${total.toFixed(2)},-\n`;
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Monthly_Revenue_${year}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    window.onload = fetchRevenueData;
   </script>
 </body>
 </html>
