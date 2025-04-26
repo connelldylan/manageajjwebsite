@@ -31,6 +31,16 @@
         <p>All registered members</p>
       </div>
 
+      <!-- 🔎 Search Bar Added Above Table -->
+      <div class="search-bar" style="margin: 20px 0;">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Search members..." 
+          style="width: 300px; max-width: 90%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;"
+        />
+      </div>
+
       <div class="table-container" style="overflow-x: auto;">
         <table id="customers-table" style="min-width: 1000px;">
           <thead>
@@ -87,7 +97,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    
     function formatPhoneNumber(phone) {
       if (!phone) return 'N/A';
       const digits = phone.replace(/\D/g, '');
@@ -174,7 +183,7 @@
             return;
           }
 
-          renderCheckIns(); // Render initially
+          renderCheckIns();
         })
         .catch((error) => {
           details.innerHTML = `Error loading check-ins: ${error.message}`;
@@ -235,6 +244,21 @@
     function closeModal() {
       document.getElementById('checkinModal').style.display = 'none';
     }
+
+    // 🔥 Live Search
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+      const filter = this.value.toLowerCase();
+      const rows = document.querySelectorAll('#customers-tbody tr');
+
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        if (text.includes(filter)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
 
     window.onload = loadMembers;
   </script>
