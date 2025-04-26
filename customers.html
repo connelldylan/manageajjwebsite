@@ -156,15 +156,6 @@
         <button id="sortToggleBtn" onclick="toggleSortOrder()" style="padding: 5px 10px; cursor: pointer;">Sort: Descending</button>
       </div>
   
-      <!-- 🔎 New Search for Check-Ins -->
-      <div style="margin: 10px 0;">
-        <input 
-          type="text" 
-          id="checkinSearchInput" 
-          placeholder="Search check-in dates..." 
-          style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;"
-        />
-      </div>
   
       <div id="checkinDetails" style="margin-top: 10px;"></div>
     </div>
@@ -361,6 +352,92 @@ function deleteMember(id) {
   }
 }
 
+let currentCheckIns = [];
+  let currentSortOrder = 'desc'; // default sort
+
+  function showCheckIns(memberId) {
+    const modal = document.getElementById('checkinModal');
+    const details = document.getElementById('checkinDetails');
+    const sortBtn = document.getElementById('sortToggleBtn');
+    details.innerHTML = 'Loading...';
+
+    db.collection('Members').doc(memberId).get()
+      .then((doc) => {
+        if (!doc.exists) {
+          details.innerHTML = 'No data found.';
+          return;
+        }
+
+        const data = doc.data();
+        currentCheckIns = Array.isArray(data.CheckIns) ? data.CheckIns : [];
+
+        if (currentCheckIns.length === 0) {
+          details.innerHTML = 'No check-ins recorded.';
+          return;
+        }
+
+        renderCheckIns();
+      })
+      .catch((error) => {
+        details.innerHTML = `Error loading check-ins: ${error.message}`;
+      });
+
+    modal.style.display = 'block';
+  }
+
+  function renderCheckIns() {
+    const details = document.getElementById('checkinDetails');
+    const sortBtn = document.getElementById('sortToggleBtn');
+
+    currentCheckIns.sort((a, b) => {
+      const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
+      const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
+      return currentSortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+
+    let tableHTML = `
+      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <thead>
+          <tr>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ccc;">#</th>
+            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ccc;">Check-In Date</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    currentCheckIns.forEach((entry, index) => {
+      let dateStr = 'Invalid Date';
+      try {
+        const date = entry.date?.toDate ? entry.date.toDate() : new Date(entry.date);
+        if (!isNaN(date.getTime())) {
+          dateStr = date.toLocaleString();
+        }
+      } catch {}
+
+      tableHTML += `
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${index + 1}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${dateStr}</td>
+        </tr>
+      `;
+    });
+
+    tableHTML += `</tbody></table>`;
+    details.innerHTML = tableHTML;
+
+    sortBtn.textContent = `Sort: ${currentSortOrder === 'asc' ? 'Ascending' : 'Descending'}`;
+  }
+
+  function toggleSortOrder() {
+    currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+    renderCheckIns();
+  }
+
+  function closeModal() {
+    document.getElementById('checkinModal').style.display = 'none';
+  }
+
 
     document.getElementById('searchInput').addEventListener('keyup', function() {
       const filter = this.value.toLowerCase();
@@ -378,5 +455,5 @@ function deleteMember(id) {
 
     window.onload = loadMembers;
   </script>
-</body>
+</body> 
 </html>
