@@ -1,38 +1,46 @@
 <script>
-    if (sessionStorage.getItem('isAdmin') !== 'true') {
-      window.location.href = 'index.html';
-    }
-  </script>
-  
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Overview</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div class="container">
-      <nav class="sidebar">
-        <h2>Analytics</h2>
-        <ul>
-          <li><a href="overview.html">Overview</a></li>
-          <li><a href="customers.html">Members</a></li>
-          <li><a href="metrics.html">Key Metrics</a></li>
-          <li><a href="reports.html">Revenue Reports</a></li>
+  if (sessionStorage.getItem('isAdmin') !== 'true') {
+    window.location.href = 'index.html';
+  }
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Overview</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <nav class="sidebar">
+      <h2>Analytics</h2>
+      <ul>
+        <li><a href="overview.html" class="active">Overview</a></li>
+        <li><a href="customers.html">Members</a></li>
+        <li><a href="metrics.html">Key Metrics</a></li>
+        <li><a href="reports.html">Revenue Reports</a></li>
+        <li><a href="addNewMember.html">Add New Member</a></li>
+      </ul>
+    </nav>
+
+    <main class="main-content">
+      <div class="header">
+        <h1>Welcome Back, Admin</h1>
+        <p>This is your control center. Use the sidebar to access detailed metrics, reports, and member management tools.</p>
+      </div>
+
+      <div style="margin-top: 40px;">
+        <h3>Quick Links</h3>
+        <ul style="line-height: 2;">
+          <li><a href="customers.html">View All Members</a></li>
           <li><a href="addNewMember.html">Add New Member</a></li>
+          <li><a href="metrics.html">View Key Metrics</a></li>
+          <li><a href="reports.html">Check Revenue Reports</a></li>
         </ul>
-      </nav>
-  
-      <main class="main-content">
-        <div class="header">
-          <h1>Dashboard Overview</h1>
-          <p>Summary and system highlights</p>
-        </div>
-        <!-- Overview content goes here -->
-      </main>
-    </div>
-  </body>
-  </html>
-  
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -80,7 +80,7 @@ body {
 
 .card h3 {
     margin-bottom: 15px;
-    color: #000080;
+    color: #000000;
 }
 
 /* Chart Container */
@@ -257,7 +257,7 @@ tr:hover {
   .button-link {
     display: inline-block;  
     padding: 10px 20px;
-    background-color: #404142;
+    background-color: #000080;
     color: white;
     text-decoration: none;
     border-radius: 8px;
