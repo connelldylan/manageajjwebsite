@@ -84,7 +84,7 @@
         <li><a href="customers.html">Members</a></li>
         <li><a href="metrics.html">Key Metrics</a></li>
         <li><a href="reports.html">Revenue Reports</a></li>
-        <li><a href="settings.html">Add New Member</a></li>
+        <li><a href="addNewMember.html">Add New Member</a></li>
       </ul>
     </nav>
 
@@ -93,7 +93,12 @@
         <h1>Member List</h1>
         <p>All registered members</p>
       </div>
-
+      <div id="reset-filter-container" style="display: none; margin-bottom: 20px;">
+        <button onclick="resetMemberFilter()" style="background-color: #bdbdbd; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+          Reset Filter (Show All Members)
+        </button>
+      </div>
+      
       <div class="search-bar" style="margin: 20px 0;">
         <input 
           type="text" 
@@ -278,6 +283,11 @@
       });
     });
 
+    
+    function viewSpecificMember(name) {
+    sessionStorage.setItem('memberFilter', name);
+  window.location.href = 'customers.html';
+} 
     function sortTable(column) {
       const sorted = [...memberData].sort((a, b) => {
         let aValue = a[column];
@@ -453,7 +463,32 @@ let currentCheckIns = [];
       });
     });
 
-    window.onload = loadMembers;
+    function applyMemberFilter() {
+  const filterName = sessionStorage.getItem('memberFilter');
+  if (filterName) {
+    sessionStorage.removeItem('memberFilter'); // clear after use
+    const rows = document.querySelectorAll('#customers-tbody tr');
+    rows.forEach(row => {
+      const nameCell = row.children[0]?.innerText.toLowerCase();
+      if (!nameCell.includes(filterName.toLowerCase())) {
+        row.style.display = 'none';
+      }
+    });
+    document.getElementById('reset-filter-container').style.display = 'block'; // show reset button
+  }
+}
+
+function resetMemberFilter() {
+  renderTable(memberData); // redraw full table
+  document.getElementById('reset-filter-container').style.display = 'none'; // hide reset button again
+}
+
+// Inside window.onload after loadMembers()
+window.onload = function() {
+  loadMembers();
+  setTimeout(applyMemberFilter, 800); // slight delay to ensure table loads first
+};
+
   </script>
 </body> 
 </html>
