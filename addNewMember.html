@@ -1,10 +1,4 @@
-<script>
-    if (sessionStorage.getItem('isAdmin') !== 'true') {
-      window.location.href = 'index.html';
-    }
-  </script>
-  
-  <!DOCTYPE html>
+    <!DOCTYPE html>
   <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -36,5 +30,21 @@
             </a>
           </div>
   </body>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script>
+  const auth = firebase.auth();
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "index.html";
+    }
+  });
+
+  function logout() {
+    auth.signOut().then(() => {
+      window.location.href = "index.html";
+    });
+  }
+</script>
+<button onclick="logout()" style="position: fixed; top: 20px; right: 20px; background-color: #c0392b; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">Logout</button>
   </html>
   

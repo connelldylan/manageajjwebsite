@@ -6,25 +6,36 @@
   <title>Key Metrics</title>
   <link rel="stylesheet" href="style.css" />
   <style>
-    .chart-container {
-      max-width: 360px;
-      margin: 30px auto;
+    .calendar-wrapper {
+      display: flex;
+      gap: 40px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    #calendar-container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      width: 500px;
+    }
+    #calendar-container h3 {
+      margin: 0;
+      flex: 1;
       text-align: center;
     }
-
-    canvas {
-      display: block;
-      margin: 0 auto;
+    #calendar-container th {
+      background-color: #000080;
+      color: white;
+    }
+    #calendar-container td {
+      padding: 6px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <script>
-    if (sessionStorage.getItem('isAdmin') !== 'true') {
-      window.location.href = 'index.html';
-    }
-  </script>
-
   <div class="container">
     <nav class="sidebar">
       <h2>Analytics</h2>
@@ -43,7 +54,6 @@
         <p>At‑a‑glance performance indicators</p>
       </div>
 
-      <!-- Metrics Cards -->
       <div class="dashboard-grid">
         <div class="card">
           <h3>Total Members</h3>
@@ -63,15 +73,42 @@
         </div>
       </div>
 
-      <!-- Belt Level Distribution -->
-      <div class="chart-container">
-        <h3>Belt Level Distribution</h3>
-        <canvas id="beltPieChart" width="300" height="300"></canvas>
+      <div class="calendar-wrapper">
+        <div id="calendar-container">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <button onclick="prevMonth()" style="background: none; border: none; font-size: 20px; cursor: pointer;">&#8592;</button>
+            <h3 id="calendar-month-year"></h3>
+            <button onclick="nextMonth()" style="background: none; border: none; font-size: 20px; cursor: pointer;">&#8594;</button>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; text-align: center;">
+            <thead>
+              <tr>
+                <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+              </tr>
+            </thead>
+            <tbody id="calendar-body"></tbody>
+          </table>
+        </div>
+
+        <div class="chart-container">
+          <h3>Belt Level Distribution</h3>
+          <canvas id="beltPieChart" width="300" height="300"></canvas>
+        </div>
       </div>
     </main>
   </div>
 
-  <!-- Firebase & Chart.js -->
+  <!-- Modal -->
+  <div id="checkinModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Check-Ins</h2>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div id="checkinDetails"></div>
+    </div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -86,7 +123,6 @@
       appId: "1:834961798562:web:525a5bbfc7f53000d4eefb",
       measurementId: "G-YE8ZCN42B2"
     };
-    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -114,12 +150,7 @@
       const data = Object.values(beltCounts);
 
       const beltColorMap = {
-        'White': '#ecf0f1',    // Light gray instead of pure white
-        'Blue': '#1a42ba',
-        'Purple': '#61215C',
-        'Brown': '#4B351d',
-        'Black': '#000000',
-        'Unknown': '#bdc3c7'
+        'White': '#ecf0f1', 'Blue': '#1a42ba', 'Purple': '#61215C', 'Brown': '#4B351d', 'Black': '#000000', 'Unknown': '#bdc3c7'
       };
 
       const backgroundColors = labels.map(label => beltColorMap[label] || '#95a5a6');
@@ -130,20 +161,11 @@
         type: 'pie',
         data: {
           labels,
-          datasets: [{
-            data,
-            backgroundColor: backgroundColors,
-            borderColor: borderColors,
-            borderWidth: 1
-          }]
+          datasets: [{ data, backgroundColor: backgroundColors, borderColor: borderColors, borderWidth: 1 }]
         },
         options: {
           responsive: false,
-          plugins: {
-            legend: {
-              position: 'bottom'
-            }
-          },
+          plugins: { legend: { position: 'bottom' } },
           onClick: (event, elements) => {
             if (elements.length > 0) {
               const index = elements[0].index;
@@ -156,7 +178,124 @@
       });
     }
 
-    window.onload = loadMetrics;
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+    let allMembers = [];
+
+    async function loadMembersForCalendar() {
+      const snapshot = await db.collection("Members").get();
+      allMembers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderCalendar(currentMonth, currentYear);
+    }
+
+    function renderCalendar(month, year) {
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const calendarBody = document.getElementById("calendar-body");
+      const monthYearLabel = document.getElementById("calendar-month-year");
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+      monthYearLabel.textContent = `${monthNames[month]} ${year}`;
+      calendarBody.innerHTML = "";
+
+      let date = 1;
+      for (let i = 0; i < 6; i++) {
+        const row = document.createElement("tr");
+        for (let j = 0; j < 7; j++) {
+          const cell = document.createElement("td");
+          if (i === 0 && j < firstDay) {
+            cell.innerHTML = "";
+          } else if (date > daysInMonth) {
+            break;
+          } else {
+            cell.textContent = date;
+            const fullDate = new Date(year, month, date);
+            cell.onclick = () => showCheckinsOnDate(fullDate);
+            date++;
+          }
+          row.appendChild(cell);
+        }
+        calendarBody.appendChild(row);
+      }
+    }
+
+    function prevMonth() {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      renderCalendar(currentMonth, currentYear);
+    }
+
+    function nextMonth() {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      renderCalendar(currentMonth, currentYear);
+    }
+
+function showCheckinsOnDate(dateObj) {
+  const matches = [];
+
+  allMembers.forEach(member => {
+    const checkIns = Array.isArray(member.CheckIns) ? member.CheckIns : [];
+    checkIns.forEach(entry => {
+      const entryDate = entry.date?.toDate ? entry.date.toDate() : new Date(entry.date);
+
+      const isSameLocalDay =
+        entryDate.getFullYear() === dateObj.getFullYear() &&
+        entryDate.getMonth() === dateObj.getMonth() &&
+        entryDate.getDate() === dateObj.getDate();
+
+      if (isSameLocalDay) {
+        matches.push({
+          name: member.Name || "Unknown",
+          time: entryDate.toLocaleTimeString()
+        });
+      }
+    });
+  });
+
+  const details = document.getElementById("checkinDetails");
+  const displayDate = dateObj.toLocaleDateString();
+  if (matches.length === 0) {
+    details.innerHTML = `<p>No check-ins for ${displayDate}.</p>`;
+  } else {
+    const list = matches.map(m => `<li>${m.name} — ${m.time}</li>`).join("");
+    details.innerHTML = `<p><strong>${displayDate}</strong></p><ul>${list}</ul>`;
+  }
+  document.getElementById("checkinModal").style.display = "block";
+}
+
+
+    function closeModal() {
+      document.getElementById("checkinModal").style.display = "none";
+    }
+
+    window.onload = function () {
+      loadMetrics();
+      loadMembersForCalendar();
+    };
   </script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script>
+  const auth = firebase.auth();
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "index.html";
+    }
+  });
+
+  function logout() {
+    auth.signOut().then(() => {
+      window.location.href = "index.html";
+    });
+  }
+</script>
+<button onclick="logout()" style="position: fixed; top: 20px; right: 20px; background-color: #c0392b; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">Logout</button>
 </body>
 </html>
+

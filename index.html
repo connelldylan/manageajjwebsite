@@ -2,169 +2,117 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Login</title>
   <link rel="stylesheet" href="style.css" />
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      background-color: #f5f6fa;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      font-family: Arial, sans-serif;
-      position: relative;
-      overflow: hidden;
+      background-color: #f4f6f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-
-    .bg-logo {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 900px;
-      opacity: 0.1;
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    .login-box {
-      background-color: #ffffff;
-      padding: 40px 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      width: 100%;
+    .login-container {
       max-width: 400px;
-      position: relative;
-      z-index: 1;
+      margin: 120px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
-
-    .login-box h1 {
+    .login-container h2 {
       text-align: center;
-      margin-bottom: 30px;
-      color: #333;
+      margin-bottom: 25px;
+      color: #000080;
     }
-
-    .login-box input {
+    .login-container input[type="text"],
+    .login-container input[type="password"] {
       width: 100%;
       padding: 12px;
-      margin-bottom: 15px;
+      margin: 10px 0;
       border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 15px;
+      border-radius: 5px;
     }
-
-    .password-wrapper {
-      position: relative;
-    }
-
-    .toggle-password {
-      position: absolute;
-      top: 40%;
-      right: 12px;
-      transform: translateY(-50%);
-      cursor: pointer;
-      width: 20px;
-      height: 20px;
-    }
-
-    .login-box button {
+    .login-container button {
       width: 100%;
       padding: 12px;
-      background-color: #333;
+      background-color: #000080;
       color: white;
       border: none;
-      border-radius: 6px;
-      font-size: 16px;
+      border-radius: 5px;
+      font-weight: bold;
       cursor: pointer;
-      transition: background-color 0.3s ease;
     }
-
-    .login-box button:hover {
-      background-color: #111;
+    .login-container button:hover {
+      background-color: #3498db;
     }
-
-    #errorMsg {
+    .password-toggle {
+      position: relative;
+    }
+    .password-toggle img {
+      position: absolute;
+      right: 12px;
+      top: 38px;
+      width: 20px;
+      cursor: pointer;
+    }
+    .error {
       color: red;
-      text-align: center;
+      font-size: 0.9em;
       margin-top: 10px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <!-- Transparent background logo -->
-  <img src="images/logo.png" alt="Logo" class="bg-logo" />
-
-  <div class="login-box">
-    <h1>Admin Login</h1>
+  <div class="login-container">
+    <h2>La Crosse AJJ Admin Login</h2>
     <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required />
-      <div class="password-wrapper">
+      <input type="text" id="username" placeholder="Email" required />
+      <div class="password-toggle">
         <input type="password" id="password" placeholder="Password" required />
-        <img 
-          id="toggleIcon" 
-          src="images/hide.png" 
-          alt="Toggle Password" 
-          class="toggle-password" 
-          onclick="togglePassword()" 
-        />
+        <img id="toggleIcon" src="images/show.png" onclick="togglePassword()" alt="Toggle" />
       </div>
       <button type="submit">Login</button>
-      <p id="errorMsg"></p>
+      <div class="error" id="errorMsg"></div>
     </form>
   </div>
 
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCbZ7xXq3ymeWRgXDjOsu-xMvEKwv33ig8",
       authDomain: "member-management-system-cb2dc.firebaseapp.com",
-      projectId: "member-management-system-cb2dc",
+      projectId: "member-management-system-cb2dc"
     };
-
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const auth = firebase.auth();
 
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    const loginForm = document.getElementById("loginForm");
+    const errorMsg = document.getElementById("errorMsg");
+
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
+      const email = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
 
       try {
-        const query = await db.collection('Admin')
-          .where('Username', '==', username)
-          .where('Password', '==', password)
-          .get();
-
-        if (!query.empty) {
-          sessionStorage.setItem('isAdmin', 'true');
-          window.location.href = 'overview.html';
-        } else {
-          document.getElementById('errorMsg').innerText = 'Invalid username or password.';
-        }
-      } catch (err) {
-        document.getElementById('errorMsg').innerText = 'Login failed. Please try again.';
-        console.error(err);
+        await auth.signInWithEmailAndPassword(email, password);
+        sessionStorage.setItem("isAdmin", "true");
+        window.location.href = "overview.html";
+      } catch (error) {
+        console.error("Login error:", error);
+        errorMsg.textContent = "Invalid login credentials.";
       }
     });
 
     function togglePassword() {
       const passwordInput = document.getElementById("password");
-      const toggleIcon = document.getElementById("toggleIcon");
-
-      if (passwordInput.type === "password") {
-        passwordInput.type = "text";
-        toggleIcon.src = "images/show.png";
-      } else {
-        passwordInput.type = "password";
-        toggleIcon.src = "images/hide.png";
-      }
+      const icon = document.getElementById("toggleIcon");
+      const isVisible = passwordInput.type === "text";
+      passwordInput.type = isVisible ? "password" : "text";
+      icon.src = isVisible ? "images/hide.png" : "images/show.png";
     }
   </script>
 </body>
 </html>
+
